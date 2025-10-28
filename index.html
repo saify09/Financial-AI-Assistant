@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Financial AI Assistant</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container py-4">
+  <h2 class="mb-4 text-center">🤖 Financial AI Assistant</h2>
+
+  <div class="row">
+    <!-- Sidebar -->
+    <div class="col-md-4">
+      <div class="border rounded p-2 bg-white shadow-sm">
+        <h5>History</h5>
+        <div id="chatList" class="chat-list"></div>
+        <button class="btn btn-success w-100 mt-2" onclick="startNewChat()">➕ New Chat</button>
+        <button class="btn btn-danger w-100 mt-2" onclick="clearHistory()">🗑️ Clear History</button>
+      </div>
+    </div>
+
+    <!-- Chat Area -->
+    <div class="col-md-8">
+      <div class="card shadow-sm">
+        <div class="card-body d-flex flex-column">
+          <div id="output" class="mb-3 flex-grow-1">
+            <!-- 👋 Greeting message -->
+            <div id="greeting" class="text-center text-muted mt-5">
+              <h5>Welcome To AI ChatBot</h5>
+              <p>Ask anything about finance below to get started.</p>
+            </div>
+          </div>
+
+          <!-- ✅ Input area with inline Send button -->
+          <div class="input-container">
+            <textarea id="scenarioInput" placeholder="Ask Anything About Finance"></textarea>
+            <button id="generateBtn">➤</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_URL = "/api/generate";
+let history = JSON.parse(localStorage.getItem("chatHistory")) || [];
+let currentChat = null;
+let isNewChat = true;
+let holdTimer;
+
+// ✅ Convert plain URLs into clickable links
+function linkify(text) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  return text.replace(urlRegex, (url) => {
+    const safeUrl = url.replace(/"/g, "&quot;");
+    return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+  });
+}
+
+function renderChatList() {
+  const chatList = document.getElementById("chatList");
+  chatList.innerHTML = "";
+  history.forEach((chat, index) => {
+    const div = document.createElement("div");
+    div.className = `chat-item ${currentChat === index ? 'active-chat' : ''}`;
+    div.textContent = chat.title || `Scenario ${index + 1}`;
+
+    // Normal click → open chat
+    div.onclick = () => openChat(index);
+
+    // Long press → delete chat
+    div.addEventListener("mousedown", () => {
+      holdTimer = setTimeout(() => {
+        if (confirm(`Delete "${chat.title}" from history?`)) {
+          history.splice(index, 1);
+          localStorage.setItem("chatHistory", JSON.stringify(history));
+          if (currentChat === index) {
+            currentChat = null;
+            document.getElementById("output").innerHTML = `
+              <div id="greeting" class="text-center text-muted mt-5">
+                <h5>Welcome To AI ChatBot</h5>
+                <p>Ask anything about finance below to get started.</p>
+              </div>
+            `;
+          }
+          renderChatList();
+        }
+      }, 1000);
+    });
+
+    div.addEventListener("mouseup", () => clearTimeout(holdTimer));
+    div.addEventListener("mouseleave", () => clearTimeout(holdTimer));
+
+    chatList.appendChild(div);
+  });
+}
+
+function hideGreeting() {
+  const greeting = document.getElementById("greeting");
+  if (greeting) greeting.remove();
+}
+
+function createMessageElement(role, text, chatIndex, msgIndex) {
+  const div = document.createElement("div");
+  div.className = `message ${role}`;
+  const formattedText = role === "ai" ? linkify(text) : text;
+
+  let actionButtons = `
+    <button class="msg-btn" onclick="copyMessage(${chatIndex}, ${msgIndex}, '${role}')">📋</button>
+    <button class="msg-btn" onclick="editMessage(${chatIndex}, ${msgIndex}, '${role}')">✏️</button>
+  `;
+
+  if (role === "user") {
+    actionButtons += `<button class="msg-btn" onclick="deleteMessage(${chatIndex}, ${msgIndex})">🗑️</button>`;
+  }
+
+  div.innerHTML = `
+    <div class="msg-header">
+      <strong>${role === "user" ? "🧑 You" : "🤖 AI Response"}</strong>
+      <div class="msg-actions">${actionButtons}</div>
+    </div>
+    <div class="msg-text">${formattedText}</div>
+  `;
+  return div;
+}
+
+function deleteMessage(chatIndex, msgIndex) {
+  if (!confirm("Delete this message?")) return;
+  history[chatIndex].messages.splice(msgIndex, 1);
+  localStorage.setItem("chatHistory", JSON.stringify(history));
+  openChat(chatIndex);
+}
+
+function openChat(index) {
+  hideGreeting();
+  currentChat = index;
+  isNewChat = false;
+  const chat = history[index];
+  const output = document.getElementById("output");
+  output.innerHTML = `<h5 class="text-center mb-3">${chat.title}</h5>`;
+  chat.messages.forEach((m, i) => {
+    output.appendChild(createMessageElement("user", m.user, index, i));
+    output.appendChild(createMessageElement("ai", m.assistant, index, i));
+  });
+  renderChatList();
+  output.scrollTop = output.scrollHeight;
+}
+
+function startNewChat() {
+  isNewChat = true;
+  currentChat = null;
+  document.getElementById("output").innerHTML = `
+    <div id="greeting" class="text-center text-muted mt-5">
+      <h5>Welcome To AI ChatBot</h5>
+      <p>Ask anything about finance below to get started.</p>
+    </div>
+  `;
+  document.getElementById("scenarioInput").value = "";
+}
+
+function clearHistory() {
+  if (!confirm("Clear all chats history?")) return;
+  localStorage.removeItem("chatHistory");
+  history = [];
+  currentChat = null;
+  renderChatList();
+  document.getElementById("output").innerHTML = `
+    <div id="greeting" class="text-center text-muted mt-5">
+      <h5>Welcome To AI ChatBot</h5>
+      <p>Ask anything about finance below to get started.</p>
+    </div>
+  `;
+}
+
+async function generateNarrative() {
+  const scenario = document.getElementById("scenarioInput").value.trim();
+  if (!scenario) return alert("Please enter something!");
+  hideGreeting();
+
+  const output = document.getElementById("output");
+  const chatIndex = currentChat ?? history.length;
+  const msgIndex = currentChat !== null ? history[chatIndex].messages.length : 0;
+
+  const userDiv = createMessageElement("user", scenario, chatIndex, msgIndex);
+  output.appendChild(userDiv);
+
+  const loading = document.createElement("p");
+  loading.innerHTML = `<em>Generating response...</em> <span class='spinner'></span>`;
+  output.appendChild(loading);
+
+  document.getElementById("scenarioInput").value = "";
+  output.scrollTop = output.scrollHeight;
+
+  let chatHistory = currentChat !== null ? history[currentChat].messages : [];
+
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        scenario,
+        history: chatHistory,
+        title: currentChat !== null ? history[currentChat].title : ""
+      })
+    });
+
+    const data = await res.json();
+    loading.remove();
+    if (data.error) throw new Error(data.error);
+
+    const aiDiv = createMessageElement("ai", data.reply, chatIndex, msgIndex);
+    output.appendChild(aiDiv);
+    output.scrollTop = output.scrollHeight;
+
+    const newMsg = { user: scenario, assistant: data.reply };
+    if (isNewChat || currentChat === null) {
+      const newChat = { title: data.title, messages: [newMsg] };
+      history.unshift(newChat);
+      currentChat = 0;
+      isNewChat = false;
+    } else {
+      history[currentChat].messages.push(newMsg);
+    }
+
+    localStorage.setItem("chatHistory", JSON.stringify(history));
+    renderChatList();
+  } catch (err) {
+    loading.remove();
+    const errMsg = document.createElement("p");
+    errMsg.classList.add("text-danger");
+    errMsg.textContent = `Error: ${err.message}`;
+    output.appendChild(errMsg);
+  }
+}
+
+function copyMessage(chatIndex, msgIndex, role) {
+  const msg = history[chatIndex].messages[msgIndex][role === "user" ? "user" : "assistant"];
+  navigator.clipboard.writeText(msg);
+  alert("Copied to clipboard!");
+}
+
+function editMessage(chatIndex, msgIndex, role) {
+  const msg = history[chatIndex].messages[msgIndex][role === "user" ? "user" : "assistant"];
+  document.getElementById("scenarioInput").value = msg;
+  document.getElementById("scenarioInput").focus();
+}
+
+document.getElementById("scenarioInput").addEventListener("keydown", function(e) {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    generateNarrative();
+  }
+});
+
+document.getElementById("generateBtn").onclick = generateNarrative;
+
+renderChatList();
+</script>
+</body>
+</html>
