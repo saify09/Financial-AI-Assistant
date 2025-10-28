@@ -1,0 +1,225 @@
+/* General Layout */
+body {
+  background: #f9f9f9;
+  font-family: 'Segoe UI', sans-serif;
+  color: #000;
+  margin: 0;
+  padding: 0;
+}
+
+h2 {
+  font-weight: 600;
+  color: #333;
+}
+
+/* Sidebar */
+.chat-list {
+  max-height: 80vh;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.chat-item {
+  cursor: pointer;
+  border-bottom: 1px solid #ddd;
+  padding: 10px 12px;
+  transition: background 0.2s;
+  border-radius: 6px;
+}
+
+.chat-item:hover {
+  background-color: #f0f0f0;
+}
+
+.active-chat {
+  background-color: #e3f2fd;
+  font-weight: 600;
+}
+
+/* Spinner */
+.spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #ccc;
+  border-top: 2px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-left: 6px;
+}
+
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
+
+/* Chat Window */
+#output {
+  background: #fff;
+  padding: 15px;
+  border-radius: 8px;
+  height: 60vh;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* Messages */
+.message {
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  color: #000;
+  position: relative;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  word-wrap: break-word;
+}
+
+.message.user {
+  background: #e0e0e0;
+  margin-left: auto;
+  max-width: 90%;
+}
+
+.message.ai {
+  background: #d0e8ff;
+  margin-right: auto;
+  max-width: 90%;
+}
+
+/* Text & Links */
+.msg-text {
+  margin-top: 5px;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.message a {
+  color: #0066cc;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.message a:hover {
+  text-decoration: underline;
+  color: #004999;
+}
+
+/* Message Actions */
+.msg-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.msg-actions {
+  display: flex;
+  gap: 5px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.message:hover .msg-actions {
+  opacity: 1;
+}
+
+.msg-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #555;
+}
+
+.msg-btn:hover {
+  color: #007bff;
+}
+
+/* Input Area */
+.input-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+textarea#scenarioInput {
+  flex: 1;
+  resize: none;
+  border-radius: 25px;
+  border: 1px solid #ccc;
+  padding: 10px 14px;
+  font-size: 15px;
+  height: 45px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+textarea#scenarioInput:focus {
+  border-color: #007bff;
+}
+
+/* Send button */
+button#generateBtn {
+  border: none;
+  background-color: #007bff;
+  color: white;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  padding: 0;
+}
+
+button#generateBtn:hover {
+  background-color: #0056b3;
+  transform: scale(1.05);
+}
+
+/* Sidebar buttons */
+button.btn-success,
+button.btn-danger {
+  border-radius: 6px;
+  width: 100%;
+  font-weight: 500;
+  display: inline-block;
+  height: auto;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  #output {
+    height: 50vh;
+  }
+
+  .send-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .input-container textarea {
+    height: 40px;
+    font-size: 14px;
+  }
+}
